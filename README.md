@@ -90,7 +90,7 @@ The focus of the project is **security**: every requirement of the course brief 
 
 | Layer | Technology | Purpose |
 |---|---|---|
-| Runtime | Node.js 20 | Server-side JavaScript |
+| Runtime | Node.js 20.19+ (22 on Netlify) | Server-side JavaScript |
 | Web framework | Express 5 | Routing, middleware, request handling |
 | Database | MySQL 8 with `mysql2` | Data storage, parameterised queries |
 | Views | EJS | Server-rendered HTML with automatic escaping |
@@ -288,7 +288,7 @@ Two tables are deliberately **not** connected:
 
 ### Prerequisites
 - **Option A:** Docker and Docker Compose
-- **Option B:** Node.js 20+ and MySQL 8+
+- **Option B:** Node.js 20.19+ and MySQL 8+
 
 ### Option A: Docker
 
