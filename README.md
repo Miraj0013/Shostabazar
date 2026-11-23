@@ -184,26 +184,103 @@ shostabazar/
 
 ## 6. Database design
 
-| Table | Purpose | Key relationships |
+The database has **8 application tables** (plus a `sessions` table created automatically by the session store). They are created on the first start from [`database/schema.sql`](database/schema.sql).
+
+### 6.1 Entity-Relationship (ER) diagram
+
+![ShostaBazar ER diagram](docs/er-diagram.webp)
+
+The tables are colour-coded by their role in the system:
+
+| Colour | Group | Tables |
 |---|---|---|
-| `users` | Accounts: bcrypt hash, role, lockout counters, encrypted TOTP secret, session version | — |
-| `otp_codes` | Hashed one-time login codes with expiry and attempt counter | `user_id` → `users.id` |
-| `password_resets` | Hashed single-use reset tokens with expiry | `user_id` → `users.id` |
-| `known_devices` | Recognised devices per user | `user_id` → `users.id` |
-| `audit_logs` | Security event history (IP, browser, details) | `user_id` (kept even if a user is removed) |
-| `products` | Product listings (soft delete with `is_active`) | `seller_id` → `users.id` |
-| `orders` | Purchases | `buyer_id` → `users.id`, `product_id` → `products.id` |
-| `dev_mailbox` | Copies of emails/SMS for local demonstration only | — |
-| `sessions` | Login sessions (created automatically by the session store) | — |
+| Blue | Identity and authentication | `users`, `otp_codes`, `password_resets`, `known_devices` |
+| Red | Security audit | `audit_logs` |
+| Green | Marketplace | `products`, `orders` |
+| Yellow | Development tooling | `dev_mailbox` |
 
-```
-users ──< otp_codes
-users ──< password_resets
-users ──< known_devices
-users ──< products ──< orders >── users (buyer)
-```
+### 6.2 How to read the diagram
 
-The tables are created automatically on the first start from `database/schema.sql`.
+- Each box is a **table (entity)**; each row inside it is a **column (attribute)** with its MySQL data type.
+- **`pk`** marks the primary key (an auto-increment `id` in every table).
+- **`fk`** marks a foreign key that points to the primary key of another table.
+- **`unique`** means no two rows may share that value (for example, two accounts cannot use the same email).
+- **`nullable`** means the column is optional and may be empty (`NULL`).
+- The lines are **relationships**. The plain end of a line (`|`) is the **"one"** side and the forked end (crow's foot) is the **"many"** side.
+
+### 6.3 Relationships
+
+| Relationship | Type | Foreign key | Meaning |
+|---|---|---|---|
+| `users` → `otp_codes` | One-to-many | `otp_codes.user_id` | A user can receive many login codes over time; each code belongs to exactly one user. |
+| `users` → `password_resets` | One-to-many | `password_resets.user_id` | A user can request many password resets; each reset token belongs to one user. |
+| `users` → `known_devices` | One-to-many | `known_devices.user_id` | A user can log in from many devices; each recognised device belongs to one user. |
+| `users` → `products` | One-to-many | `products.seller_id` | A user (as **seller**) can list many products; each product has one seller. |
+| `users` → `orders` | One-to-many | `orders.buyer_id` | A user (as **buyer**) can place many orders; each order has one buyer. |
+| `products` → `orders` | One-to-many | `orders.product_id` | A product can be bought many times; each order is for one product. |
+
+Together, `orders` links `users` and `products`, so it acts as the **associative entity** for the many-to-many relationship "users buy products". The same `users` table plays two roles in the marketplace: **seller** (through `products.seller_id`) and **buyer** (through `orders.buyer_id`).
+
+All foreign keys use `ON DELETE CASCADE`, so removing a user also removes their codes, reset tokens, devices, listings and orders. (In the application, users are normally *disabled* with `is_active` rather than deleted, and products are soft-deleted the same way.)
+
+Two tables are deliberately **not** connected:
+
+- **`audit_logs`** keeps `user_id` and `username` *without* a foreign key. The security history must survive even if a user account is later deleted, and it must also record events for usernames that do not exist (for example, failed logins with a wrong username).
+- **`dev_mailbox`** is a stand-alone outbox used only in development to show emails and SMS messages without a real mail server. It stores the recipient address, not a user id.
+
+### 6.4 Table details
+
+**`users`: accounts and login security.**
+- `username` and `email` are `unique`.
+- `password_hash` stores a salted **bcrypt** hash, never the password itself.
+- `role` (`user` / `admin`) controls access to the admin dashboard.
+- `failed_attempts` and `lock_until` implement the **lockout after 3 failed logins**.
+- `totp_secret` stores the authenticator-app secret **encrypted with AES-256-GCM**. `totp_enabled` switches it on, and `totp_last_step` stops the same code being used twice (replay protection).
+- `session_version` is increased to sign the user out on every device, for example after a password change.
+- `last_login_at`, `last_login_ip` and `password_changed_at` support the security overview on the account page.
+
+**`otp_codes`: email/SMS login codes (2FA).**
+- Only the **SHA-256 hash** of the 6-digit code is stored (`code_hash`).
+- `expires_at` gives each code a 5-minute lifetime.
+- `attempts` limits wrong guesses.
+- `used_at` makes each code single-use.
+
+**`password_resets`: password recovery.**
+- Stores the **SHA-256 hash** of the emailed reset token (`token_hash`, `unique`).
+- The token expires after 15 minutes (`expires_at`) and works only once (`used_at`).
+- `request_ip` records who asked for the reset.
+
+**`known_devices`: new-device login alerts.**
+- Stores a hash of the browser's device cookie (`device_hash`) together with a readable `device_label` and the `ip`.
+- A login from a device that is not in this table sends an email/SMS alert to the user.
+- `first_seen` and `last_seen` show the history of each device.
+
+**`audit_logs`: security event history.**
+- `event` records what happened, for example `LOGIN_SUCCESS`, `LOGIN_FAILED`, `ACCOUNT_LOCKED` or `CSRF_BLOCKED`.
+- Each entry also records the `ip`, `user_agent`, `details` and time.
+- It uses `BIGINT` for `id` because it grows much faster than the other tables.
+
+**`products`: marketplace listings.**
+- `price` uses `DECIMAL(10,2)`, which stores money exactly (floating-point numbers can round).
+- `stock` is the number of items left.
+- `is_active` hides a listing without deleting it (soft delete).
+
+**`orders`: purchases.**
+- `unit_price` and `total` are copied at the moment of purchase, so later price changes do not alter old orders.
+- `status` is one of `placed`, `shipped`, `delivered`, `cancelled`.
+- Stock is reduced inside a database transaction (`SELECT … FOR UPDATE`), so two buyers cannot buy the last item at the same time.
+
+**`dev_mailbox`: demonstration outbox.**
+- Holds copies of emails/SMS (`channel`, `recipient`, `subject`, `body`, `action_url`) so OTP codes and reset links can be shown at `/dev/mailbox`.
+- It is used only when the dev mailbox is enabled, and should be off in production.
+
+### 6.5 Design decisions
+
+- **Normalisation:** every table describes one thing, and its data is referenced by key rather than copied. The deliberate exceptions are the order price snapshot and the audit `username` explained above.
+- **Secrets are never stored in plain text:** passwords are bcrypt-hashed, OTP codes and reset tokens are SHA-256 hashed, and TOTP secrets are AES-encrypted.
+- **Indexes** speed up the common lookups: `otp_codes(user_id, purpose)`, `products(category)`, and `audit_logs(event)`, `(created_at)` and `(user_id)`. There is also a unique `(user_id, device_hash)` on `known_devices`.
+- **UTF-8 (`utf8mb4`) everywhere,** so names and product titles can hold any language, including Bangla.
+- **UTC timestamps:** all times are stored in UTC.
 
 ---
 
@@ -339,4 +416,3 @@ The application runs as a Netlify Function (`netlify/functions/server.js`) with 
 - No email verification at registration (the email is verified by the first login code) and no backup codes for the authenticator app.
 - Rate limits are stored in memory (reset on restart; not shared between server instances).
 - Possible additions: CAPTCHA, breached-password check, WebAuthn/passkeys, product images.
-# Shostabazar
