@@ -339,3 +339,4 @@ The application runs as a Netlify Function (`netlify/functions/server.js`) with 
 - No email verification at registration (the email is verified by the first login code) and no backup codes for the authenticator app.
 - Rate limits are stored in memory (reset on restart; not shared between server instances).
 - Possible additions: CAPTCHA, breached-password check, WebAuthn/passkeys, product images.
+# Shostabazar
