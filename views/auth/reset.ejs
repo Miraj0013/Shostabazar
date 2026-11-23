@@ -1,0 +1,12 @@
+<%- include('../partials/header') %>
+<section class="auth-card">
+  <h1>Choose a new password</h1>
+  <p class="muted">After the reset, every other session on your account is signed out.</p>
+  <%- include('../partials/errors', { errors }) %>
+  <form method="post" action="/reset/<%= token %>" class="form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <%- include('../partials/password-fields') %>
+    <button class="btn btn-block" type="submit">Update password</button>
+  </form>
+</section>
+<%- include('../partials/footer') %>

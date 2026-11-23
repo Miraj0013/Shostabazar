@@ -1,0 +1,101 @@
+<%- include('../partials/header') %>
+<h1>Security settings</h1>
+<%- include('../partials/errors', { errors }) %>
+
+<div class="grid-2 gap">
+  <section class="panel">
+    <h2>Account</h2>
+    <dl class="kv">
+      <dt>Username</dt><dd><%= currentUser.username %></dd>
+      <dt>Email</dt><dd><%= currentUser.email %></dd>
+      <dt>Role</dt><dd><%= currentUser.role %></dd>
+      <dt>Member since</dt><dd data-utc="<%= new Date(info.created_at).toISOString() %>"></dd>
+      <dt>Last sign-in</dt><dd><% if (info.last_login_at) { %><span data-utc="<%= new Date(info.last_login_at).toISOString() %>"></span> from <%= info.last_login_ip %><% } else { %>—<% } %></dd>
+      <dt>Password changed</dt><dd><% if (info.password_changed_at) { %><span data-utc="<%= new Date(info.password_changed_at).toISOString() %>"></span><% } else { %>—<% } %></dd>
+    </dl>
+    <form method="post" action="/account/phone" class="form inline-form">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <label>Mobile for SMS alerts
+        <input type="tel" name="phone" value="<%= currentUser.phone || '' %>" maxlength="20" placeholder="+8801XXXXXXXXX">
+      </label>
+      <button class="btn btn-sm" type="submit">Save</button>
+    </form>
+  </section>
+
+  <section class="panel">
+    <h2>Two-factor authentication</h2>
+    <% if (currentUser.totp_enabled) { %>
+      <p><span class="badge badge-ok">Authenticator app ON</span></p>
+      <p class="muted">Sign-in requires a code from your authenticator app (Google Authenticator, Microsoft Authenticator, Authy…).</p>
+      <form method="post" action="/account/2fa/disable" class="form" data-confirm="Remove the authenticator app? Codes will be sent by email instead.">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <label>Confirm with your password
+          <input type="password" name="password" required maxlength="128" autocomplete="current-password">
+        </label>
+        <button class="btn btn-danger btn-sm" type="submit">Remove authenticator app</button>
+      </form>
+    <% } else { %>
+      <p><span class="badge badge-info">Email code ON</span></p>
+      <p class="muted">Every sign-in already needs a one-time code sent to your email<% if (currentUser.phone) { %> and phone<% } %>. For stronger protection, use an authenticator app.</p>
+      <a class="btn btn-sm" href="/account/2fa/setup">Set up authenticator app</a>
+    <% } %>
+  </section>
+</div>
+
+<section class="panel">
+  <h2>Change password</h2>
+  <form method="post" action="/account/password" class="form narrow-form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label>Current password
+      <input type="password" name="current" required maxlength="128" autocomplete="current-password">
+    </label>
+    <%- include('../partials/password-fields') %>
+    <button class="btn" type="submit">Change password</button>
+  </form>
+</section>
+
+<section class="panel">
+  <h2>Recognised devices</h2>
+  <p class="muted">Signing in from a device not on this list triggers an email/SMS alert.</p>
+  <div class="table-wrap">
+  <table class="table">
+    <thead><tr><th>Device</th><th>Last IP</th><th>First seen</th><th>Last seen</th><th></th></tr></thead>
+    <tbody>
+    <% devices.forEach(function (d) { %>
+      <tr>
+        <td><%= d.device_label %></td>
+        <td><%= d.ip %></td>
+        <td data-utc="<%= new Date(d.first_seen).toISOString() %>"></td>
+        <td data-utc="<%= new Date(d.last_seen).toISOString() %>"></td>
+        <td>
+          <form method="post" action="/account/devices/<%= d.id %>/delete" data-confirm="Forget this device?">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="btn btn-ghost btn-sm" type="submit">Forget</button>
+          </form>
+        </td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section class="panel">
+  <h2>Recent security activity</h2>
+  <div class="table-wrap">
+  <table class="table">
+    <thead><tr><th>Event</th><th>IP</th><th>Details</th><th>Time</th></tr></thead>
+    <tbody>
+    <% activity.forEach(function (a) { %>
+      <tr>
+        <td><span class="badge <%= /FAIL|LOCK|DENIED|BLOCK/.test(a.event) ? 'badge-bad' : 'badge-muted' %>"><%= a.event %></span></td>
+        <td><%= a.ip %></td>
+        <td><%= a.details || '' %></td>
+        <td data-utc="<%= new Date(a.created_at).toISOString() %>"></td>
+      </tr>
+    <% }) %>
+    </tbody>
+  </table>
+  </div>
+</section>
+<%- include('../partials/footer') %>

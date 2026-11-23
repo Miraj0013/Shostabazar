@@ -1,0 +1,29 @@
+<%- include('partials/header') %>
+<section class="hero">
+  <div>
+    <h1>Buy &amp; sell <span class="accent">safely</span> — the ShostaBazar way.</h1>
+    <p class="lead">A Bangladeshi online marketplace built with security first: two-step verification on every sign-in, new-device alerts, automatic account lockout and protection against SQL injection, XSS and CSRF.</p>
+    <div class="hero-actions">
+      <a class="btn btn-lg" href="/register">Create free account</a>
+      <a class="btn btn-lg btn-ghost" href="/login">Sign in</a>
+    </div>
+  </div>
+  <div class="hero-panel">
+    <ul class="feature-list">
+      <li><span>🔑</span><div><strong>bcrypt-hashed passwords</strong><small>Salted, cost factor 12 — never stored in plain text.</small></div></li>
+      <li><span>📲</span><div><strong>Two-factor authentication</strong><small>Email/SMS one-time code or authenticator app (TOTP).</small></div></li>
+      <li><span>⏱️</span><div><strong>Lockout after 3 failed attempts</strong><small>Plus rate limiting against brute force.</small></div></li>
+      <li><span>📧</span><div><strong>New device alerts</strong><small>Email/SMS when your account is used somewhere new.</small></div></li>
+      <li><span>🛡️</span><div><strong>SQLi · XSS · CSRF protection</strong><small>Prepared statements, output encoding, CSP and CSRF tokens.</small></div></li>
+    </ul>
+  </div>
+</section>
+<% if (featured.length) { %>
+<section>
+  <div class="section-head"><h2>Fresh on the bazar</h2><a href="/dashboard">Browse all →</a></div>
+  <div class="product-grid">
+    <% featured.forEach(function (p) { %><%- include('partials/product-card', { p }) %><% }) %>
+  </div>
+</section>
+<% } %>
+<%- include('partials/footer') %>

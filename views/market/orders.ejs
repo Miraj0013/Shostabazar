@@ -1,0 +1,25 @@
+<%- include('../partials/header') %>
+<h1>My orders</h1>
+<% if (!orders.length) { %>
+  <p class="empty">No orders yet. <a href="/dashboard">Start shopping →</a></p>
+<% } else { %>
+<div class="table-wrap">
+<table class="table">
+  <thead><tr><th>#</th><th>Item</th><th>Seller</th><th>Qty</th><th>Total</th><th>Status</th><th>Date</th></tr></thead>
+  <tbody>
+  <% orders.forEach(function (o) { %>
+    <tr>
+      <td><%= o.id %></td>
+      <td><a href="/products/<%= o.product_id %>"><%= o.title %></a></td>
+      <td><%= o.seller %></td>
+      <td><%= o.quantity %></td>
+      <td><%= money(o.total) %></td>
+      <td><span class="badge badge-info"><%= o.status %></span></td>
+      <td data-utc="<%= new Date(o.created_at).toISOString() %>"></td>
+    </tr>
+  <% }) %>
+  </tbody>
+</table>
+</div>
+<% } %>
+<%- include('../partials/footer') %>

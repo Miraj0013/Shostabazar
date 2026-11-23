@@ -1,0 +1,11 @@
+<a class="card product" href="/products/<%= p.id %>">
+  <div class="product-thumb cat-<%= p.category.toLowerCase() %>"><%= icon(p.category) %></div>
+  <div class="product-body">
+    <span class="tag"><%= p.category %></span>
+    <h3><%= p.title %></h3>
+    <div class="product-meta">
+      <strong class="price"><%= money(p.price) %></strong>
+      <% if (typeof p.seller !== 'undefined') { %><span class="muted">by <%= p.seller %></span><% } %>
+    </div>
+  </div>
+</a>

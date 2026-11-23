@@ -1,0 +1,27 @@
+node_modules/
+.env
+.env.*
+!.env.example
+netlify.env
+.netlify/
+npm-debug.log*
+*.log
+.DS_Store
+coverage/
+.vscode/
+.idea/
+.claude/
+
+# Never commit keys or credentials
+github_key*
+key
+key.pub
+id_rsa*
+id_ed25519*
+id_ecdsa*
+*.pem
+# ...except the database server's PUBLIC CA certificate (no secret inside)
+!certs/ca.pem
+*.key
+*.p12
+*.pfx

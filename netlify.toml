@@ -1,0 +1,31 @@
+# Netlify configuration for ShostaBazar.
+# Static files in /public are served by the CDN; every other request goes to the
+# Express app running as the "server" function (netlify/functions/server.js).
+
+[build]
+  # No build step: Netlify installs dependencies from package-lock.json automatically.
+  publish = "public"
+
+[build.environment]
+  NODE_VERSION = "20"
+
+[functions]
+  directory = "netlify/functions"
+  node_bundler = "zisi"            # keep the normal folder layout (views/, database/schema.sql)
+  included_files = ["views/**", "database/schema.sql", "certs/**", "node_modules/express-mysql-session/schema.sql"]
+
+# Send every request that is not a static file to the Express app.
+[[redirects]]
+  from = "/*"
+  to = "/.netlify/functions/server/:splat"
+  status = 200
+
+# Security headers for the static files served by the CDN
+# (pages from the app get Helmet's headers, including the CSP).
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    X-Frame-Options = "DENY"
+    Referrer-Policy = "same-origin"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"

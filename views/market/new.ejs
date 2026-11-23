@@ -1,0 +1,29 @@
+<%- include('../partials/header') %>
+<section class="panel narrow">
+  <h1>Sell an item</h1>
+  <%- include('../partials/errors', { errors }) %>
+  <form method="post" action="/products" class="form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label>Title
+      <input type="text" name="title" value="<%= values.title || '' %>" required minlength="3" maxlength="120">
+    </label>
+    <label>Description
+      <textarea name="description" rows="5" required minlength="10" maxlength="2000"><%= values.description || '' %></textarea>
+    </label>
+    <div class="grid-3">
+      <label>Category
+        <select name="category" required>
+          <% categories.forEach(function (c) { %><option value="<%= c %>" <%= c === values.category ? 'selected' : '' %>><%= c %></option><% }) %>
+        </select>
+      </label>
+      <label>Price (৳)
+        <input type="number" name="price" value="<%= values.price || '' %>" min="0.01" max="9999999" step="0.01" required>
+      </label>
+      <label>Stock
+        <input type="number" name="stock" value="<%= values.stock || '1' %>" min="1" max="99999" step="1" required>
+      </label>
+    </div>
+    <button class="btn" type="submit">Publish listing</button>
+  </form>
+</section>
+<%- include('../partials/footer') %>

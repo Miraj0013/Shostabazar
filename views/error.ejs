@@ -1,0 +1,8 @@
+<%- include('partials/header') %>
+<section class="auth-card center">
+  <div class="big-icon"><%= status === 404 ? '🔎' : status === 403 ? '⛔' : status === 429 ? '⏳' : '⚠️' %></div>
+  <h1><%= status %> · <%= title %></h1>
+  <p class="muted"><%= message %></p>
+  <a class="btn" href="/">Go to home</a>
+</section>
+<%- include('partials/footer') %>

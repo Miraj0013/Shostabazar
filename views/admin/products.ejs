@@ -1,0 +1,32 @@
+<%- include('../partials/header') %>
+<h1>Products</h1>
+<%- include('nav') %>
+<form class="searchbar" method="get" action="/admin/products" role="search">
+  <input type="search" name="q" value="<%= q %>" placeholder="Search by title or seller…" maxlength="100">
+  <button class="btn" type="submit">Search</button>
+</form>
+<div class="table-wrap">
+<table class="table">
+  <thead><tr><th>#</th><th>Title</th><th>Seller</th><th>Category</th><th>Price</th><th>Stock</th><th></th></tr></thead>
+  <tbody>
+  <% products.forEach(function (p) { %>
+    <tr>
+      <td><%= p.id %></td>
+      <td><a href="/products/<%= p.id %>"><%= p.title %></a></td>
+      <td><%= p.seller %></td>
+      <td><%= p.category %></td>
+      <td><%= money(p.price) %></td>
+      <td><%= p.stock %></td>
+      <td>
+        <form method="post" action="/products/<%= p.id %>/delete" data-confirm="Remove this listing?">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="btn btn-danger btn-sm" type="submit">Remove</button>
+        </form>
+      </td>
+    </tr>
+  <% }) %>
+  </tbody>
+</table>
+</div>
+<% if (!products.length) { %><p class="empty">No products found.</p><% } %>
+<%- include('../partials/footer') %>

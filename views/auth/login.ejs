@@ -1,0 +1,26 @@
+<%- include('../partials/header') %>
+<section class="auth-card">
+  <h1>Welcome back</h1>
+  <p class="muted">Sign in to your ShostaBazar account.</p>
+  <% if (notice) { %><div class="alert alert-warning"><%= notice %></div><% } %>
+  <% if (error) { %><div class="alert alert-danger" role="alert"><%= error %></div><% } %>
+  <form method="post" action="/login" class="form" autocomplete="on">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label>Username or email
+      <input type="text" name="username" value="<%= username %>" required maxlength="254" autocomplete="username" autofocus>
+    </label>
+    <label>Password
+      <div class="pw-wrap">
+        <input type="password" name="password" id="login-password" required maxlength="128" autocomplete="current-password">
+        <button type="button" class="pw-toggle" data-toggle="login-password" aria-label="Show password">👁</button>
+      </div>
+    </label>
+    <button class="btn btn-block" type="submit">Continue</button>
+  </form>
+  <div class="auth-links">
+    <a href="/forgot">Forgot password?</a>
+    <span>New here? <a href="/register">Create an account</a></span>
+  </div>
+  <div class="security-note">🔐 Protected by two-step verification. After 3 failed attempts the account is locked for a while.</div>
+</section>
+<%- include('../partials/footer') %>

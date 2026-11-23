@@ -1,0 +1,26 @@
+<%- include('../partials/header') %>
+<section class="auth-card">
+  <div class="big-icon">🛡️</div>
+  <h1>Two-step verification</h1>
+  <% if (method === 'totp') { %>
+    <p class="muted">Open your authenticator app and enter the 6-digit code for ShostaBazar.</p>
+  <% } else { %>
+    <p class="muted">We sent a 6-digit code to <strong><%= destination %></strong><% if (hasPhone) { %> and your phone<% } %>. It expires in a few minutes.</p>
+  <% } %>
+  <% if (error) { %><div class="alert alert-danger" role="alert"><%= error %></div><% } %>
+  <form method="post" action="/verify-2fa" class="form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label>Verification code
+      <input class="otp-input" type="text" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="one-time-code" autofocus placeholder="••••••">
+    </label>
+    <button class="btn btn-block" type="submit">Verify &amp; sign in</button>
+  </form>
+  <% if (method === 'email') { %>
+    <form method="post" action="/verify-2fa/resend" class="center">
+      <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+      <button class="link-btn" type="submit">Didn't get it? Resend code</button>
+    </form>
+  <% } %>
+  <div class="auth-links"><a href="/login">← Use a different account</a></div>
+</section>
+<%- include('../partials/footer') %>

@@ -1,0 +1,21 @@
+<%- include('../partials/header') %>
+<section class="auth-card">
+  <h1>Set up authenticator app</h1>
+  <ol class="steps">
+    <li>Install Google Authenticator, Microsoft Authenticator or Authy on your phone.</li>
+    <li>Scan this QR code (or type the key manually).</li>
+    <li>Enter the 6-digit code shown in the app.</li>
+  </ol>
+  <div class="qr"><img src="<%= qr %>" alt="QR code for authenticator app" width="220" height="220"></div>
+  <p class="center"><code class="secret"><%= secret %></code></p>
+  <% if (error) { %><div class="alert alert-danger"><%= error %></div><% } %>
+  <form method="post" action="/account/2fa/enable" class="form">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label>Code from the app
+      <input class="otp-input" type="text" name="code" inputmode="numeric" pattern="[0-9]{6}" maxlength="6" required autocomplete="one-time-code" placeholder="••••••">
+    </label>
+    <button class="btn btn-block" type="submit">Verify &amp; enable</button>
+  </form>
+  <div class="auth-links"><a href="/account">Cancel</a></div>
+</section>
+<%- include('../partials/footer') %>

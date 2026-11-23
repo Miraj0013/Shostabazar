@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="referrer" content="same-origin">
+  <title><%= title %> · ShostaBazar</title>
+  <link rel="icon" href="/img/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body<% if (currentUser) { %> data-idle-timeout="<%= idleTimeoutSeconds %>"<% } %>>
+<header class="topbar">
+  <div class="container topbar-inner">
+    <a class="brand" href="/"><span class="brand-mark">৳</span><span class="brand-name">Shosta<span>Bazar</span></span></a>
+    <nav class="nav">
+      <% if (currentUser) { %>
+        <a href="/dashboard" class="<%= path === '/dashboard' ? 'active' : '' %>">Marketplace</a>
+        <a href="/products/new" class="<%= path === '/products/new' ? 'active' : '' %>">Sell</a>
+        <a href="/listings" class="<%= path === '/listings' ? 'active' : '' %>">My listings</a>
+        <a href="/orders" class="<%= path === '/orders' ? 'active' : '' %>">Orders</a>
+        <% if (currentUser.role === 'admin') { %><a href="/admin" class="<%= path.startsWith('/admin') ? 'active' : '' %> admin-link">Admin</a><% } %>
+        <a href="/account" class="<%= path.startsWith('/account') ? 'active' : '' %>">🔒 <%= currentUser.username %></a>
+        <form method="post" action="/logout" class="inline">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="btn btn-sm btn-ghost" type="submit">Sign out</button>
+        </form>
+      <% } else { %>
+        <a href="/login">Sign in</a>
+        <a href="/register" class="btn btn-sm">Create account</a>
+      <% } %>
+    </nav>
+  </div>
+</header>
+<% if (devMailbox) { %>
+<div class="devbar">Development mode: emails &amp; SMS (OTP codes, reset links, alerts) are shown in the <a href="/dev/mailbox" target="_blank" rel="noopener">dev mailbox</a>.</div>
+<% } %>
+<main class="container main">
+<%- include('flash') %>

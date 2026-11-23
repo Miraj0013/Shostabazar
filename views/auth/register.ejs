@@ -1,0 +1,27 @@
+<%- include('../partials/header') %>
+<section class="auth-card wide">
+  <h1>Create your account</h1>
+  <p class="muted">Buy and sell safely on ShostaBazar.</p>
+  <%- include('../partials/errors', { errors }) %>
+  <form method="post" action="/register" class="form" novalidate>
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="grid-2">
+      <label>Username
+        <input type="text" name="username" value="<%= values.username || '' %>" required minlength="3" maxlength="30" pattern="[A-Za-z0-9_]{3,30}" autocomplete="username">
+        <small class="hint">3–30 letters, numbers or _</small>
+      </label>
+      <label>Email
+        <input type="email" name="email" value="<%= values.email || '' %>" required maxlength="254" autocomplete="email">
+        <small class="hint">Used for verification codes &amp; alerts</small>
+      </label>
+    </div>
+    <label>Mobile number <span class="muted">(optional, for SMS alerts)</span>
+      <input type="tel" name="phone" value="<%= values.phone || '' %>" maxlength="20" placeholder="+8801XXXXXXXXX" autocomplete="tel">
+    </label>
+    <%- include('../partials/password-fields') %>
+    <label class="check"><input type="checkbox" name="terms"> I agree to the terms of use and privacy policy.</label>
+    <button class="btn btn-block" type="submit">Create account</button>
+  </form>
+  <div class="auth-links"><span>Already have an account? <a href="/login">Sign in</a></span></div>
+</section>
+<%- include('../partials/footer') %>

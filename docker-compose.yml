@@ -1,0 +1,55 @@
+# One-command local deployment:  docker compose up --build
+# Then open http://localhost:3000  (dev mailbox: http://localhost:3000/dev/mailbox)
+services:
+  db:
+    image: mysql:8.4
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root-change-me}
+      MYSQL_DATABASE: ${DB_NAME:-shostabazar}
+      MYSQL_USER: ${DB_USER:-shostabazar}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-shosta-change-me}
+    command: ["--default-time-zone=+00:00"]
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root-change-me}"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${PORT:-3000}:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      APP_URL: ${APP_URL:-http://localhost:3000}
+      SESSION_SECRET: ${SESSION_SECRET:-dev-only-session-secret-change-me-0123456789abcdef}
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-dev-only-encryption-key-change-me}
+      COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      TRUST_PROXY: ${TRUST_PROXY:-0}
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: ${DB_USER:-shostabazar}
+      DB_PASSWORD: ${DB_PASSWORD:-shosta-change-me}
+      DB_NAME: ${DB_NAME:-shostabazar}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-admin@shostabazar.local}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Ch@ngeMe-Adm1n!}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASS: ${SMTP_PASS:-}
+      MAIL_FROM: ${MAIL_FROM:-ShostaBazar Security <no-reply@shostabazar.local>}
+      # Keep the dev mailbox on for the class demo; set to false for a public deployment.
+      DEV_MAILBOX: ${DEV_MAILBOX:-true}
+
+volumes:
+  db_data:

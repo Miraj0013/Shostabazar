@@ -1,0 +1,18 @@
+<%- include('partials/header') %>
+<h1>📬 Dev mailbox</h1>
+<p class="muted">Development only. These are the emails and SMS the app sent. In production they go through SMTP / Twilio and this page is disabled (<code>DEV_MAILBOX=false</code>).</p>
+<% if (!messages.length) { %><p class="empty">No messages yet.</p><% } %>
+<div class="mail-list">
+<% messages.forEach(function (m) { %>
+  <article class="mail">
+    <div class="mail-head">
+      <span class="badge <%= m.channel === 'sms' ? 'badge-warn' : 'badge-info' %>"><%= m.channel.toUpperCase() %></span>
+      <strong><%= m.subject %></strong>
+      <span class="muted">to <%= m.recipient %> · <span data-utc="<%= new Date(m.created_at).toISOString() %>"><%= new Date(m.created_at).toISOString() %></span></span>
+    </div>
+    <pre class="mail-body"><%= m.body %></pre>
+    <% if (m.action_url) { %><a class="btn btn-sm" href="<%= m.action_url %>"><%= m.action_url %></a><% } %>
+  </article>
+<% }) %>
+</div>
+<%- include('partials/footer') %>

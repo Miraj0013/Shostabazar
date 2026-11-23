@@ -1,0 +1,30 @@
+<%- include('../partials/header') %>
+<h1>Security logs</h1>
+<%- include('nav') %>
+<form class="searchbar" method="get" action="/admin/logs" role="search">
+  <input type="search" name="q" value="<%= q %>" placeholder="Search username, IP or details…" maxlength="100">
+  <select name="event" aria-label="Event type">
+    <option value="">All events</option>
+    <% events.forEach(function (e) { %><option value="<%= e %>" <%= e === event ? 'selected' : '' %>><%= e %></option><% }) %>
+  </select>
+  <button class="btn" type="submit">Filter</button>
+</form>
+<div class="table-wrap">
+<table class="table small">
+  <thead><tr><th>Time</th><th>Event</th><th>User</th><th>IP</th><th>Details</th><th>User agent</th></tr></thead>
+  <tbody>
+  <% logs.forEach(function (l) { %>
+    <tr>
+      <td data-utc="<%= new Date(l.created_at).toISOString() %>"></td>
+      <td><span class="badge <%= /FAIL|LOCK|DENIED|BLOCK|CSRF|RATE/.test(l.event) ? 'badge-bad' : (/SUCCESS|DONE|ENABLED/.test(l.event) ? 'badge-ok' : 'badge-muted') %>"><%= l.event %></span></td>
+      <td><%= l.username || '—' %></td>
+      <td><%= l.ip %></td>
+      <td><%= l.details || '' %></td>
+      <td class="ua" title="<%= l.user_agent %>"><%= l.user_agent %></td>
+    </tr>
+  <% }) %>
+  </tbody>
+</table>
+</div>
+<% if (!logs.length) { %><p class="empty">No log entries match.</p><% } %>
+<%- include('../partials/footer') %>

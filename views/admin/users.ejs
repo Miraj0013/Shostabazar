@@ -1,0 +1,44 @@
+<%- include('../partials/header') %>
+<h1>Users</h1>
+<%- include('nav') %>
+<form class="searchbar" method="get" action="/admin/users" role="search">
+  <input type="search" name="q" value="<%= q %>" placeholder="Search by username or email…" maxlength="100">
+  <button class="btn" type="submit">Search</button>
+</form>
+<div class="table-wrap">
+<table class="table">
+  <thead><tr><th>User</th><th>Role</th><th>2FA</th><th>Status</th><th>Last sign-in</th><th>Actions</th></tr></thead>
+  <tbody>
+  <% users.forEach(function (u) { const locked = u.lock_until && new Date(u.lock_until) > now; %>
+    <tr>
+      <td><strong><%= u.username %></strong><br><small class="muted"><%= u.email %><%= u.phone ? ' · ' + u.phone : '' %></small></td>
+      <td><span class="badge <%= u.role === 'admin' ? 'badge-warn' : 'badge-muted' %>"><%= u.role %></span></td>
+      <td><%= u.totp_enabled ? 'App' : 'Email' %></td>
+      <td>
+        <% if (!u.is_active) { %><span class="badge badge-bad">Disabled</span>
+        <% } else if (locked) { %><span class="badge badge-bad">Locked</span>
+        <% } else { %><span class="badge badge-ok">Active</span><% } %>
+        <% if (u.failed_attempts) { %><small class="muted"><%= u.failed_attempts %> failed</small><% } %>
+      </td>
+      <td><% if (u.last_login_at) { %><span data-utc="<%= new Date(u.last_login_at).toISOString() %>"></span><br><small class="muted"><%= u.last_login_ip %></small><% } else { %>—<% } %></td>
+      <td class="actions">
+        <% if (u.id !== currentUser.id) {
+             const acts = [];
+             if (locked || u.failed_attempts) acts.push(['unlock', 'Unlock', 'btn-ghost']);
+             acts.push(u.is_active ? ['disable', 'Disable', 'btn-danger'] : ['enable', 'Enable', 'btn-ghost']);
+             acts.push(u.role === 'admin' ? ['demote', 'Make user', 'btn-ghost'] : ['promote', 'Make admin', 'btn-ghost']);
+             acts.push(['logout', 'Revoke sessions', 'btn-ghost']);
+             acts.forEach(function (a) { %>
+          <form method="post" action="/admin/users/<%= u.id %>/<%= a[0] %>" class="inline" data-confirm="<%= a[1] %>: <%= u.username %>?">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="btn btn-sm <%= a[2] %>" type="submit"><%= a[1] %></button>
+          </form>
+        <% }); } else { %><span class="muted">(you)</span><% } %>
+      </td>
+    </tr>
+  <% }) %>
+  </tbody>
+</table>
+</div>
+<% if (!users.length) { %><p class="empty">No users found.</p><% } %>
+<%- include('../partials/footer') %>

@@ -1,0 +1,56 @@
+<%- include('../partials/header') %>
+<h1>Admin dashboard</h1>
+<%- include('nav') %>
+
+<form class="searchbar" method="get" action="/admin/users" role="search">
+  <input type="search" name="q" placeholder="Search users by username or email…" maxlength="100" aria-label="Search users">
+  <button class="btn" type="submit">Search users</button>
+</form>
+
+<div class="stat-grid">
+  <div class="stat"><span>Users</span><strong><%= stats.users %></strong></div>
+  <div class="stat"><span>Active products</span><strong><%= stats.products %></strong></div>
+  <div class="stat"><span>Orders</span><strong><%= stats.orders %></strong></div>
+  <div class="stat"><span>Sales volume</span><strong><%= money(stats.revenue) %></strong></div>
+  <div class="stat warn"><span>Failed logins (24h)</span><strong><%= stats.failed24h %></strong></div>
+  <div class="stat bad"><span>Locked accounts</span><strong><%= stats.locked %></strong></div>
+  <div class="stat bad"><span>Blocked requests (24h)</span><strong><%= stats.blocked24h %></strong><small>CSRF · rate limit · access denied</small></div>
+  <div class="stat ok"><span>Users with authenticator</span><strong><%= stats.totp %></strong></div>
+</div>
+
+<div class="grid-2 gap">
+  <section class="panel">
+    <h2>Sign-ins, last 7 days</h2>
+    <% if (!daily.length) { %><p class="empty">No data yet.</p><% } else {
+         const max = Math.max(1, ...daily.map(function (d) { return Math.max(Number(d.ok), Number(d.failed)); })); %>
+      <div class="bars">
+        <% daily.forEach(function (d) { %>
+          <div class="bar-row">
+            <span class="bar-label"><%= new Date(d.day).toISOString().slice(5, 10) %></span>
+            <div class="bar-track">
+              <div class="bar ok w-<%= Math.round(Number(d.ok) / max * 20) * 5 %>"></div>
+              <div class="bar bad w-<%= Math.round(Number(d.failed) / max * 20) * 5 %>"></div>
+            </div>
+            <span class="bar-val"><%= d.ok %> / <%= d.failed %></span>
+          </div>
+        <% }) %>
+      </div>
+      <p class="legend"><span class="dot ok"></span> successful <span class="dot bad"></span> failed</p>
+    <% } %>
+  </section>
+  <section class="panel">
+    <h2>Recent security events</h2>
+    <ul class="event-list">
+      <% events.forEach(function (e) { %>
+        <li>
+          <span class="badge <%= e.event === 'NEW_DEVICE_LOGIN' || e.event === 'PASSWORD_RESET_DONE' ? 'badge-info' : 'badge-bad' %>"><%= e.event %></span>
+          <span><%= e.username || '—' %></span>
+          <span class="muted"><%= e.ip %> · <span data-utc="<%= new Date(e.created_at).toISOString() %>"></span></span>
+        </li>
+      <% }) %>
+      <% if (!events.length) { %><li class="muted">Nothing suspicious yet.</li><% } %>
+    </ul>
+    <a href="/admin/logs">View all logs →</a>
+  </section>
+</div>
+<%- include('../partials/footer') %>
