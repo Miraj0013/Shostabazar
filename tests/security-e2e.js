@@ -7,7 +7,7 @@
 // The dev mailbox must be enabled (DEV_MAILBOX=true) because OTP codes are read from it.
 const config = require('../src/config');
 const mysql = require('mysql2/promise');
-const otplib = require('otplib');
+const totp = require('../src/utils/totp');
 const BASE = process.env.TEST_BASE_URL || config.appUrl;
 const ADMIN = config.admin;
 let db;
@@ -209,17 +209,17 @@ async function loginWithOtp(c, user, email, password) {
   r = await a.get('/account/2fa/setup');
   const secret = r.text.match(/<code class="secret">([A-Z2-7]+)<\/code>/)[1];
   check('QR code shown', r.text.includes('data:image/png;base64'));
-  r = await a.post('/account/2fa/setup', '/account/2fa/enable', { code: await otplib.generate({ secret }) });
+  r = await a.post('/account/2fa/setup', '/account/2fa/enable', { code: await totp.generate({ secret }) });
   const [[tu]] = await db.query('SELECT totp_enabled, totp_secret FROM users WHERE username = ?', ['alice']);
   check('TOTP enabled, secret encrypted at rest', tu.totp_enabled === 1 && !tu.totp_secret.includes(secret));
   const t = new Client();
   r = await t.post('/login', '/login', { username: 'alice', password: 'Ch4nged!Bazar#1' });
   r = await t.get('/verify-2fa');
   check('login now asks for authenticator code', r.text.includes('authenticator app'));
-  const sameCode = await otplib.generate({ secret });
+  const sameCode = await totp.generate({ secret });
   r = await t.post('/verify-2fa', '/verify-2fa', { code: sameCode });
   check('replayed TOTP code rejected', r.status === 401);
-  const nextCode = await otplib.generate({ secret, epoch: Math.floor(Date.now() / 1000) + 30 });
+  const nextCode = await totp.generate({ secret, epoch: Math.floor(Date.now() / 1000) + 30 });
   r = await t.post('/verify-2fa', '/verify-2fa', { code: nextCode });
   check('fresh TOTP code accepted', r.location === '/dashboard', r.status + ' ' + r.location);
 

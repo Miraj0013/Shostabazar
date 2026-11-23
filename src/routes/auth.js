@@ -1,7 +1,7 @@
 'use strict';
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const otplib = require('otplib');
+const totp = require('../utils/totp');
 const config = require('../config');
 const { query, one } = require('../config/db');
 const { guestOnly, limiters } = require('../middleware/security');
@@ -165,7 +165,7 @@ router.post('/verify-2fa', guestOnly, limiters.otp, async (req, res, next) => {
     let ok = false;
     if (/^\d{6}$/.test(code)) {
       if (pending.method === 'totp' && user.totp_secret) {
-        const result = await otplib.verify({
+        const result = await totp.verify({
           secret: decrypt(user.totp_secret), token: code, epochTolerance: 30,
           afterTimeStep: user.totp_last_step ?? undefined, // a code can be used only once
         });

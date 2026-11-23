@@ -1,7 +1,7 @@
 'use strict';
 const express = require('express');
 const bcrypt = require('bcryptjs');
-const otplib = require('otplib');
+const totp = require('../utils/totp');
 const QRCode = require('qrcode');
 const config = require('../config');
 const { query, one } = require('../config/db');
@@ -73,9 +73,9 @@ router.post('/phone', async (req, res, next) => {
 router.get('/2fa/setup', async (req, res, next) => {
   try {
     if (req.user.totp_enabled) return res.redirect('/account');
-    if (!req.session.pendingTotpSecret) req.session.pendingTotpSecret = otplib.generateSecret();
+    if (!req.session.pendingTotpSecret) req.session.pendingTotpSecret = totp.generateSecret();
     const secret = req.session.pendingTotpSecret;
-    const uri = otplib.generateURI({ issuer: config.appName, label: req.user.email, secret });
+    const uri = totp.generateURI({ issuer: config.appName, label: req.user.email, secret });
     const qr = await QRCode.toDataURL(uri, { margin: 1, width: 220 });
     res.render('account/totp-setup', { title: 'Set up authenticator', qr, secret, error: null });
   } catch (err) { next(err); }
@@ -86,9 +86,9 @@ router.post('/2fa/enable', async (req, res, next) => {
     const secret = req.session.pendingTotpSecret;
     if (!secret) return res.redirect('/account/2fa/setup');
     const code = str(req.body.code, 10).replace(/\s/g, '');
-    const result = /^\d{6}$/.test(code) ? await otplib.verify({ secret, token: code, epochTolerance: 30 }) : { valid: false };
+    const result = /^\d{6}$/.test(code) ? await totp.verify({ secret, token: code, epochTolerance: 30 }) : { valid: false };
     if (!result.valid) {
-      const uri = otplib.generateURI({ issuer: config.appName, label: req.user.email, secret });
+      const uri = totp.generateURI({ issuer: config.appName, label: req.user.email, secret });
       const qr = await QRCode.toDataURL(uri, { margin: 1, width: 220 });
       return res.status(400).render('account/totp-setup', { title: 'Set up authenticator', qr, secret, error: 'That code is not valid. Check your phone clock and try again.' });
     }

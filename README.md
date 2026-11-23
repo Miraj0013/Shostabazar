@@ -97,7 +97,7 @@ The focus of the project is **security**: every requirement of the course brief 
 | Frontend | HTML, CSS, vanilla JavaScript | User interface (no external CDN) |
 | Sessions | `express-session`, `express-mysql-session` | Server-side sessions stored in MySQL |
 | Password hashing | `bcryptjs` | bcrypt hashing |
-| Two-factor authentication | `otplib`, `qrcode` | TOTP codes and QR setup |
+| Two-factor authentication | Node `crypto` (RFC 6238 TOTP in `src/utils/totp.js`), `qrcode` | Authenticator-app codes and QR setup |
 | Security headers | `helmet` | CSP and other HTTP security headers |
 | Rate limiting | `express-rate-limit` | Brute-force protection |
 | Email / SMS | `nodemailer` (SMTP), Twilio API | Verification codes and security alerts |
@@ -164,6 +164,7 @@ shostabazar/
 │   │   └── audit.js             Security audit log
 │   └── utils/
 │       ├── crypto.js            Secure random values, hashing, AES-256-GCM encryption
+│       ├── totp.js              Authenticator-app codes (RFC 6238 TOTP)
 │       └── validate.js          Input validation and password policy
 ├── views/                       EJS templates (auth, market, account, admin, partials)
 ├── public/                      CSS, client-side JavaScript, icon
